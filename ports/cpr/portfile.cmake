@@ -3,30 +3,35 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO libcpr/cpr
-    REF 1.7.2
-    SHA512 b2af6ab13a5dab435cc298c74ba79c365569c1e5ccfaffeea9dab0ad28cd918a198f83446761ac2e2101abb4be3a2f669f991e854e541851c1d250f34e16c414
+    REF ${VERSION}
+    SHA512 cde62f13b43bad143695e54f5f69dfd250be52d2f6a76ebb3fde3db1e1059eb3c2e9d62e71f4c90f98a33f0053aea7c97bf55d8a7fa8584a37298e6a1bc3b18a
     HEAD_REF master
     PATCHES
-        001-cpr-config.patch
+        disable_werror.patch
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        ssl CPR_ENABLE_SSL
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
-    OPTIONS 
+    OPTIONS
         -DCPR_BUILD_TESTS=OFF
-        -DCPR_FORCE_USE_SYSTEM_CURL=ON
-    OPTIONS_DEBUG
-        -DDISABLE_INSTALL_HEADERS=ON
+        -DCPR_USE_SYSTEM_CURL=ON
+        ${FEATURE_OPTIONS}
+        # skip test for unused sanitizer flags
+        -DTHREAD_SANITIZER_AVAILABLE=OFF
+        -DADDRESS_SANITIZER_AVAILABLE=OFF
+        -DLEAK_SANITIZER_AVAILABLE=OFF
+        -DUNDEFINED_BEHAVIOUR_SANITIZER_AVAILABLE=OFF
+        -DALL_SANITIZERS_AVAILABLE=OFF
 )
 
 vcpkg_cmake_install()
-
-
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/cpr)
-
-vcpkg_copy_pdbs()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-# Handle copyright
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

@@ -1,25 +1,30 @@
-vcpkg_fail_port_install(ON_TARGET "osx")
-
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO ArtifexSoftware/mupdf
-    REF 61b63d734a7b9df618f6b45dda2466aed442f7f0 # 1.19.0-rc2
-    SHA512 16661c012e18ac72b24c46caf5c02515c29a05e0a8dcf95076eff3a1f2e87c225245037480ed37068858fe6e04ff4a404f69877599b208ab9265d054ec117820
+    REF "${VERSION}"
+    SHA512 6d053b140a34061fcf5eb30f23f87e51dd8e80be29a3e505c42312c11198491102a79c2ca290f13971d25b9a286354ad44bd825593c076373c18f58bbc7b950e
     HEAD_REF master
     PATCHES
         dont-generate-extract-3rd-party-things.patch
-        use-if-instead-of-ifdef-in-writer.patch
+        fix-NAN-on-Win11.patch # https://github.com/ArtifexSoftware/mupdf/pull/54
 )
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION "${SOURCE_PATH}")
+
+vcpkg_check_features(
+    OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        ocr ENABLE_OCR
+)
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     DISABLE_PARALLEL_CONFIGURE
     OPTIONS
         -DBUILD_EXAMPLES=OFF
+        ${FEATURE_OPTIONS}
 )
 
 vcpkg_cmake_install()
@@ -28,4 +33,4 @@ file(COPY "${SOURCE_PATH}/include/mupdf" DESTINATION "${CURRENT_PACKAGES_DIR}/in
 
 vcpkg_copy_pdbs()
 
-file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

@@ -1,8 +1,9 @@
 {
   "name": "qtdoc",
-  "version-semver": "6.2.2",
-  "description": "Qt Documentation",
+  "version": "6.8.1",
+  "description": "The Qt documentation.",
   "homepage": "https://www.qt.io/",
+  "license": null,
   "dependencies": [
     {
       "name": "qtbase",

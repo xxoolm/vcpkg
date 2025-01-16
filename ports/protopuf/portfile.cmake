@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO PragmaTwice/protopuf
-    REF v2.1.0
-    SHA512 328fe2a861009c8eaa38299bf1ba31d3a47d73220018d3539b8457bb1d5d512c05e9652769a0261f0ae18be4e1e4e839e5471dfabdf0e6d130361e719ff6aadc
+    REF "v${VERSION}"
+    SHA512 c74bd2bc6090fb1b09d697ff1c082028cb3bacbe7f18bb93afe8b323f8f140a3b6d1c79ac41d54cd06eb1132d97ddc61e1dd6c2e658368ac08f80c414eb779fd
     HEAD_REF master
 )
 

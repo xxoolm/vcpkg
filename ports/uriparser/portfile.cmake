@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO uriparser/uriparser
-    REF 1ebc4811d2a986d68142587eca2256837be0da85 # uriparser-0.9.6
-    SHA512 fda7a92afddf12362691718a220ff23363c9684d0f2b500362f7060abd04440a8baaad1cd3d3ba6ab7e94a16e29763ca67c415aa66c284102bea6b80a8058045
+    REF uriparser-${VERSION}
+    SHA512 4222e6d7dcdb525514ca8f42e5a9b314e0f09102ef2e72131702b6297d7cb9f509f757b9bec64c4ef88146667a60b992ff71e3c1fea50a82e45c3a14b8992326
     HEAD_REF master
 )
 
@@ -36,7 +36,7 @@ endif()
 
 set(_package_version_re "#define[ ]+PACKAGE_VERSION[ ]+\"([0-9]+.[0-9]+.[0-9]+)\"")
 file(STRINGS
-    "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/config.h"
+	"${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/UriConfig.h"
     _package_version_define REGEX "${_package_version_re}"
 )
 string(REGEX REPLACE "${_package_version_re}" "\\1" _package_version ${_package_version_define})
@@ -54,5 +54,6 @@ endif()
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include" "${CURRENT_PACKAGES_DIR}/debug/share")
 
 file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 
 vcpkg_fixup_pkgconfig()

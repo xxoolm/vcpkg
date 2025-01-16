@@ -1,14 +1,12 @@
 # test application for this port: https://github.com/mathisloge/mapnik-vcpkg-test
 
-vcpkg_check_linkage(ONLY_DYNAMIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO mapnik/mapnik
-    REF 14f913d6ab3b0903dd36a1cb2d22f7d5493b8bb8
-    SHA512 f90762594d46946ddc512bb19b21c4d6a2f1ce81b7500a326ad512fae3a3f77e49ef3eb727ff8f98a31596e4132528212e0fa146e2eee0a9965a16551cfd0386
+    REF 283e2762d4c2175aa30f4f18ca383d1f69dcfaf6
+    SHA512 8ce914249c54d7d30e53fcccb7400fd98696390e53d18d97848b46ff99945bb76772dc8d3e7d37aad87db3ea67c6b00fd6bea04d5bc6ea09449d429caccea339
     HEAD_REF master
-    PATCHES
-        proj-find-fix.patch # Quiet search with version range somehow fails for proj8+
+    PATCHES fix-compatibility-with-boost-1.85.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -43,10 +41,18 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         "utility-svg2png"           BUILD_UTILITY_SVG2PNG
 )
 
+if (VCPKG_CRT_LINKAGE STREQUAL dynamic)
+    set(BUILD_SHARED_CRT ON)
+else()
+    set(BUILD_SHARED_CRT OFF)
+endif()
+vcpkg_find_acquire_program(PKGCONFIG)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS   
         ${FEATURE_OPTIONS}
+        -DBUILD_SHARED_CRT=${BUILD_SHARED_CRT}
         -DINSTALL_DEPENDENCIES=OFF
         -DBUILD_TESTING=OFF
         -DBUILD_BENCHMARK=OFF
@@ -55,9 +61,11 @@ vcpkg_cmake_configure(
         -DUSE_EXTERNAL_MAPBOX_POLYLABEL=ON
         -DUSE_EXTERNAL_MAPBOX_PROTOZERO=ON
         -DUSE_EXTERNAL_MAPBOX_VARIANT=ON
+        -DBOOST_REGEX_HAS_ICU=ON
         -DMAPNIK_CMAKE_DIR=share/mapnik/cmake
         -DFONTS_INSTALL_DIR=share/mapnik/fonts
         -DMAPNIK_PKGCONF_DIR=lib/pkgconfig
+        -DPKG_CONFIG_EXECUTABLE="${PKGCONFIG}"
 )
 
 vcpkg_cmake_install()

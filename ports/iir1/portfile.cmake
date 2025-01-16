@@ -1,21 +1,32 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO berndporr/iir1
-    REF 1.9.0
-    SHA512 9dced1610fbbfd7194874e984f969880dc76df3562df575c07d022b9ac96c67334b542acea395531423dfb5b8d692b14abdaff0235f048ab6ca7221bfc57fdba
+    REF "${VERSION}"
+    SHA512 2b0658a621cdfb57796cf2fea5411975b442af4af267bce2f613ae53f43572f208fdea59d7ea0178e9984e311c406f289166789aa423505ac8ed2b889ddc9f64
     HEAD_REF master
+    PATCHES
+        fix-shared-lib.patch
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DIIR1_BUILD_TESTING=OFF
+        -DIIR1_BUILD_DEMO=OFF
 )
 
 vcpkg_cmake_install()
-
-vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake)
-
 vcpkg_copy_pdbs()
+vcpkg_cmake_config_fixup(PACKAGE_NAME iir CONFIG_PATH lib/cmake/iir)
+vcpkg_fixup_pkgconfig()
+
+if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/iir.pc" " -liir" "-liir_static")
+    if(NOT VCPKG_BUILD_TYPE)
+        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/iir.pc" " -liir" " -liir_static")
+    endif()
+endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

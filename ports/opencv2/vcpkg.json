@@ -1,9 +1,11 @@
 {
   "name": "opencv2",
   "version": "2.4.13.7",
-  "port-version": 9,
-  "description": "computer vision library",
+  "port-version": 22,
+  "description": "Open Source Computer Vision Library",
   "homepage": "https://github.com/opencv/opencv",
+  "license": "BSD-3-Clause",
+  "supports": "!uwp & !(arm & windows) & !android",
   "dependencies": [
     {
       "name": "vcpkg-cmake",
@@ -19,10 +21,10 @@
     "default-features"
   ],
   "features": {
-    "cuda": {
-      "description": "CUDA support for opencv",
+    "dc1394": {
+      "description": "Dc1394 support for opencv",
       "dependencies": [
-        "cuda"
+        "libdc1394"
       ]
     },
     "default-features": {
@@ -42,9 +44,9 @@
           "name": "opencv2",
           "default-features": false,
           "features": [
-            "gtk"
+            "msmf"
           ],
-          "platform": "linux"
+          "platform": "windows & !mingw"
         }
       ]
     },
@@ -54,25 +56,11 @@
         "eigen3"
       ]
     },
-    "ffmpeg": {
-      "description": "ffmpeg support for opencv",
-      "dependencies": [
-        {
-          "name": "ffmpeg",
-          "default-features": false,
-          "features": [
-            "avcodec",
-            "avformat",
-            "swresample",
-            "swscale"
-          ]
-        }
-      ]
-    },
     "gtk": {
-      "description": "GDCM support for opencv",
+      "description": "GTK support for opencv",
+      "supports": "linux",
       "dependencies": [
-        "gtk"
+        "gtk3"
       ]
     },
     "jasper": {
@@ -87,9 +75,14 @@
         "libjpeg-turbo"
       ]
     },
+    "msmf": {
+      "description": "Microsoft Media Foundation support for opencv",
+      "supports": "windows & !mingw"
+    },
     "openexr": {
       "description": "OpenEXR support for opencv",
       "dependencies": [
+        "imath",
         "openexr"
       ]
     },
@@ -105,9 +98,6 @@
         "libpng"
       ]
     },
-    "python": {
-      "description": "Python wrapper support for opencv"
-    },
     "qt": {
       "description": "Qt GUI support for opencv",
       "dependencies": [
@@ -120,7 +110,10 @@
     "tiff": {
       "description": "TIFF support for opencv",
       "dependencies": [
-        "tiff"
+        {
+          "name": "tiff",
+          "default-features": false
+        }
       ]
     },
     "world": {

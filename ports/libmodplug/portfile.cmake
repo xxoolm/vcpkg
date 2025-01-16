@@ -4,7 +4,7 @@ if (VCPKG_LIBRARY_LINKAGE STREQUAL static)
     set(STATIC_PATCH "001-automagically-define-modplug-static.patch")
 endif()
 
-vcpkg_from_github(ARCHIVE
+vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Konstanty/libmodplug
     REF ${MODPLUG_HASH}
@@ -13,18 +13,23 @@ vcpkg_from_github(ARCHIVE
         ${STATIC_PATCH}
         002-detect_sinf.patch
         003-use-static-cast-for-ctype.patch
-        004-export-pkgconfig.patch  # https://github.com/Konstanty/libmodplug/pull/59
+        004-export-pkgconfig.patch
         005-fix-install-paths.patch # https://github.com/Konstanty/libmodplug/pull/61
 )
 
-vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH} PREFER_NINJA)
+set(EXTRA_OPTIONS "-DCMAKE_CXX_STANDARD=11")
 
-vcpkg_install_cmake()
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS ${EXTRA_OPTIONS}
+)
 
-file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
+vcpkg_cmake_install()
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 vcpkg_copy_pdbs()
 
 vcpkg_fixup_pkgconfig()
 
-file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
+file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

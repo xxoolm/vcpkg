@@ -6,11 +6,13 @@ vcpkg_from_github(
     HEAD_REF master
     PATCHES
         tweak-install.patch
+        fix-build.patch
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}/src"
     OPTIONS
+        -DCMAKE_CXX_STANDARD=11 # 17 removes std::unary_function
         -DBUILD_LOADLIBRARIES=OFF
         -DBUILD_EXAMPLES=OFF
         -DSUFFIX_LIB=
@@ -29,4 +31,4 @@ endif()
 vcpkg_copy_pdbs()
 vcpkg_fixup_pkgconfig()
 
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION ${CURRENT_PACKAGES_DIR}/share/clfft/copyright)
+file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

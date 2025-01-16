@@ -2,25 +2,19 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.com
     OUT_SOURCE_PATH SOURCE_PATH
     REPO drobilla/serd
-    REF v0.30.4
-    SHA512 59b4f67dfa8a2c01119b1c69609030d851339ba6d85c5c559b7c2454492ef40498ce710e5cf5f7a698a292db81e6bffacb86f9dafa5d7f3fe0c60d53d6e2281f
-    HEAD_REF master
+    REF "v${VERSION}"
+    SHA512 f90bf597579c5f858ebfe19a7e7cb0b824fe7485c475e3cce88427dd99f9228f5bf4708b7a9f2c67763a3c76166043cdc8cfc2d4891fab6d2a85d6ae8cd97615
+    HEAD_REF main
 )
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION "${SOURCE_PATH}")
-
-vcpkg_configure_cmake(
+vcpkg_configure_meson(
     SOURCE_PATH "${SOURCE_PATH}"
-    PREFER_NINJA
-    OPTIONS_DEBUG -DDISABLE_INSTALL_HEADERS=1
 )
 
-vcpkg_install_cmake()
+vcpkg_install_meson()
 
 vcpkg_copy_pdbs()
-vcpkg_fixup_cmake_targets()
-file(
-    INSTALL "${SOURCE_PATH}/COPYING"
-    DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
-    RENAME copyright
-)
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
+vcpkg_copy_tools(TOOL_NAMES serdi AUTO_CLEAN)
+vcpkg_fixup_pkgconfig()
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

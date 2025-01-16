@@ -1,13 +1,11 @@
-set(COLMAP_REF "3.6")
+set(COLMAP_REF "aa087848a8bd09cebf3e3cc8a5732552f30c51ad") # v3.11.1
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO colmap/colmap
-    REF ${COLMAP_REF}
-    SHA512 9a4b4f2a49891ce8ac32ab1f2e9b859336326bada889e6de49c017a069884bb6c8ab8a2ae430d955e58fc22377c63e8fba9ce80ff959713e2878e29814d44632
-    HEAD_REF dev
-    PATCHES
-        fix-dependency-freeimage.patch
+    REF "${VERSION}"
+    SHA512 1260db4346cc33c6c35efdee0157450fccef67dbc9de876fdc997c7cb90daec716e5ccec97df0a77e3e8686f43ec79f2c0a1523ea12eca2ee158347cb52dea48
+    HEAD_REF main
 )
 
 if (NOT TRIPLET_SYSTEM_ARCH STREQUAL "x64" AND ("cuda" IN_LIST FEATURES OR "cuda-redist" IN_LIST FEATURES))
@@ -23,20 +21,40 @@ endif()
 
 string(TIMESTAMP COLMAP_GIT_COMMIT_DATE "%Y-%m-%d")
 
+foreach(FEATURE ${FEATURE_OPTIONS})
+    message(STATUS "${FEATURE}")
+endforeach()
+
 set(CUDA_ENABLED OFF)
+set(GUI_ENABLED OFF)
 set(TESTS_ENABLED OFF)
+set(CGAL_ENABLED OFF)
+set(OPENMP_ENABLED ON)
 
 if("cuda" IN_LIST FEATURES)
     set(CUDA_ENABLED ON)
+    set(CUDA_ARCHITECTURES "native")
 endif()
 
 if("cuda-redist" IN_LIST FEATURES)
     set(CUDA_ENABLED ON)
-    set(CUDA_ARCHS "Common")
+    set(CUDA_ARCHITECTURES "all-major")
+endif()
+
+if("gui" IN_LIST FEATURES)
+    set(GUI_ENABLED ON)
 endif()
 
 if("tests" IN_LIST FEATURES)
     set(TESTS_ENABLED ON)
+endif()
+
+if("cgal" IN_LIST FEATURES)
+    set(CGAL_ENABLED ON)
+endif()
+
+if (VCPKG_TARGET_IS_OSX AND VCPKG_TARGET_ARCHITECTURE MATCHES "arm")
+    set(OPENMP_ENABLED OFF)
 endif()
 
 vcpkg_cmake_configure(
@@ -44,10 +62,14 @@ vcpkg_cmake_configure(
     DISABLE_PARALLEL_CONFIGURE
     OPTIONS
         -DCUDA_ENABLED=${CUDA_ENABLED}
-        -DCUDA_ARCHS=${CUDA_ARCHS}
+        -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
+        -DGUI_ENABLED=${GUI_ENABLED}
         -DTESTS_ENABLED=${TESTS_ENABLED}
         -DGIT_COMMIT_ID=${GIT_COMMIT_ID}
         -DGIT_COMMIT_DATE=${COLMAP_GIT_COMMIT_DATE}
+        -DOPENMP_ENABLED=${OPENMP_ENABLED}
+        -DCGAL_ENABLED=${CGAL_ENABLED}
+        -DFETCH_POSELIB=OFF
 )
 
 vcpkg_cmake_install()
@@ -67,7 +89,6 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/debug/include"
     "${CURRENT_PACKAGES_DIR}/debug/share"
     "${CURRENT_PACKAGES_DIR}/include/colmap/exe"
-    "${CURRENT_PACKAGES_DIR}/include/colmap/lib/Graclus/multilevelLib"
     "${CURRENT_PACKAGES_DIR}/include/colmap/tools"
     "${CURRENT_PACKAGES_DIR}/include/colmap/ui/media"
     "${CURRENT_PACKAGES_DIR}/include/colmap/ui/shaders"
@@ -80,4 +101,6 @@ file(REMOVE_RECURSE
 
 vcpkg_copy_pdbs()
 
-file(INSTALL "${SOURCE_PATH}/COPYING.txt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING.txt")
+
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")

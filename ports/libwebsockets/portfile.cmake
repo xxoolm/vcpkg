@@ -1,16 +1,13 @@
-vcpkg_fail_port_install(ON_TARGET "uwp")
-
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO warmcat/libwebsockets
-    REF a5aae049b2a386712e1be3b417915c0d44c7e675 # v4.3.0
-    SHA512 ab72201880360a3b0136497c1c1729656c3c07043f38cceec136f5671be15ab55c80136ec7480841175d3add711593ddde23cefd39ea9cb729ec0842950602dd
+    REF 4415e84c095857629863804e941b9e1c2e9347ef # v4.3.3
+    SHA512 11aed4ce06af0ef94ce3eaaf32cc2b5735be140dfcda1768cc8ccb0ed97c7bc7bdbb1b2718c6d6ef6a9058de208ba94cae85eedc1c597656300a4181060e31ff 
     HEAD_REF master
     PATCHES
         fix-dependency-libuv.patch
         fix-build-error.patch
         export-include-path.patch
-        fix-find-openssl.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" LWS_WITH_STATIC)
@@ -172,11 +169,11 @@ string(REPLACE "/../include" "/../../include" LIBWEBSOCKETSCONFIG_CMAKE "${LIBWE
 file(WRITE "${CURRENT_PACKAGES_DIR}/share/libwebsockets/libwebsockets-config.cmake" "${LIBWEBSOCKETSCONFIG_CMAKE}")
 
 if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
-    vcpkg_replace_string( "${CURRENT_PACKAGES_DIR}/share/libwebsockets/LibwebsocketsTargets-debug.cmake" "websockets_static.lib" "websockets.lib")
+    vcpkg_replace_string( "${CURRENT_PACKAGES_DIR}/share/libwebsockets/LibwebsocketsTargets-debug.cmake" "websockets_static.lib" "websockets.lib" IGNORE_UNCHANGED)
 endif()
 
 if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
-    vcpkg_replace_string( "${CURRENT_PACKAGES_DIR}/share/libwebsockets/LibwebsocketsTargets-release.cmake" "websockets_static.lib" "websockets.lib")
+    vcpkg_replace_string( "${CURRENT_PACKAGES_DIR}/share/libwebsockets/LibwebsocketsTargets-release.cmake" "websockets_static.lib" "websockets.lib" IGNORE_UNCHANGED)
 endif()
 
 if (VCPKG_LIBRARY_LINKAGE STREQUAL static)

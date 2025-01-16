@@ -1,24 +1,24 @@
-set(LIBSPATIALITE_VERSION_STR "5.0.1")
 vcpkg_download_distfile(ARCHIVE
-    URLS "https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${LIBSPATIALITE_VERSION_STR}.tar.gz"
-    FILENAME "libspatialite-${LIBSPATIALITE_VERSION_STR}.tar.gz"
-    SHA512 c2552994bc30d69d1e80aa274760f048cd384f71e8350a1e48a47cb8222ba71a1554a69c6534eedde9a09dc582c39c089967bcc1c57bf158cc91a3e7b1840ddf
+    URLS "https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${VERSION}.tar.gz"
+    FILENAME "libspatialite-${VERSION}.tar.gz"
+    SHA512 2745b373e31cea58623224def6090c491b58409803bb71231450dfa2cfdf3aafc3fc6f680585d55d085008f8cf362c3062ae67ffc7d80257775a22eb81ef1e57
 )
 
-vcpkg_extract_source_archive_ex(
-    OUT_SOURCE_PATH SOURCE_PATH
+vcpkg_extract_source_archive(
+    SOURCE_PATH
     ARCHIVE "${ARCHIVE}"
     PATCHES
         fix-makefiles.patch
         fix-linux-configure.patch
         gaiaconfig-msvc.patch
+        fix-mingw.patch
+        fix-utf8-source.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS unused
     FEATURES
         freexl          ENABLE_FREEXL
         gcp             ENABLE_GCP
-        geocallbacks    ENABLE_GEOCALLBACKS
         rttopo          ENABLE_RTTOPO
 )
 
@@ -38,9 +38,6 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
     if(ENABLE_GCP)
         string(APPEND CL_FLAGS " /DENABLE_GCP")
     endif()
-    if(NOT ENABLE_GEOCALLBACKS)
-        string(APPEND CL_FLAGS " /DOMIT_GEOCALLBACKS")
-    endif()
     if(ENABLE_RTTOPO)
         string(APPEND CL_FLAGS " /DENABLE_RTTOPO")
     endif()
@@ -49,7 +46,11 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
         PREFIX PKGCONFIG
         MODULES --msvc-syntax ${pkg_config_modules}
         LIBS
+        CFLAGS
     )
+    
+    set(CL_FLAGS_RELEASE "${CL_FLAGS} ${PKGCONFIG_CFLAGS_RELEASE}")
+    set(CL_FLAGS_DEBUG "${CL_FLAGS} ${PKGCONFIG_CFLAGS_DEBUG}")
 
     # vcpkg_build_nmake doesn't supply cmake's implicit link libraries
     if(PKGCONFIG_LIBS_DEBUG MATCHES "libcrypto")
@@ -77,12 +78,14 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
     endif()
     vcpkg_install_nmake(
         SOURCE_PATH "${SOURCE_PATH}"
-        OPTIONS
-            "CL_FLAGS=${CL_FLAGS}"
+        PREFER_JOM
+        CL_LANGUAGE C
         OPTIONS_RELEASE
+            "CL_FLAGS=${CL_FLAGS_RELEASE}"
             "INST_DIR=${INST_DIR}"
             "LIBS_ALL=${LIBS_ALL_RELEASE}"
         OPTIONS_DEBUG
+            "CL_FLAGS=${CL_FLAGS_DEBUG}"
             "INST_DIR=${INST_DIR}\\debug"
             "LIBS_ALL=${LIBS_ALL_DEBUG}"
             "LINK_FLAGS=/debug"
@@ -94,18 +97,21 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
 
     if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
         file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/bin")
-        file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/bin")
         file(REMOVE "${CURRENT_PACKAGES_DIR}/lib/spatialite_i.lib")
-        file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite_i.lib")
+        if (NOT VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
+            file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/bin")
+            file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite_i.lib")
+        endif()
     else()
         file(REMOVE "${CURRENT_PACKAGES_DIR}/lib/spatialite.lib")
-        file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite.lib")
         file(RENAME "${CURRENT_PACKAGES_DIR}/lib/spatialite_i.lib" "${CURRENT_PACKAGES_DIR}/lib/spatialite.lib")
-        file(RENAME "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite_i.lib" "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite.lib")
+        if (NOT VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
+            file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite.lib")
+            file(RENAME "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite_i.lib" "${CURRENT_PACKAGES_DIR}/debug/lib/spatialite.lib")
+        endif()
     endif()
 
     set(infile "${SOURCE_PATH}/spatialite.pc.in")
-    set(VERSION "${LIBSPATIALITE_VERSION_STR}")
     set(libdir [[${prefix}/lib]])
     set(exec_prefix [[${prefix}]])
     list(JOIN pkg_config_modules " " requires_private)
@@ -169,14 +175,15 @@ else()
     vcpkg_configure_make(
         SOURCE_PATH "${SOURCE_PATH}"
         AUTOCONFIG
+        DETERMINE_BUILD_TRIPLET
         OPTIONS
             ${TARGET_ALIAS}
             ${FREEXL_OPTION}
             ${GCP_OPTION}
-            ${GEOCALLBACKS_OPTION}
             ${RTTOPO_OPTION}
             "--disable-examples"
             "--disable-minizip"
+            "cross_compiling=yes" # avoid conftest rpath trouble
         OPTIONS_DEBUG
             "LIBS=${PKGCONFIG_LIBS_DEBUG} ${SYSTEM_LIBS}"
         OPTIONS_RELEASE
@@ -190,7 +197,7 @@ else()
         "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/Makefile"
     )
     foreach(makefile IN LISTS makefiles)
-        vcpkg_replace_string("${makefile}" " -I$(top_builddir)/./src/headers/spatialite" " -I$(top_builddir)/./src/headers")
+        vcpkg_replace_string("${makefile}" " -I$(top_builddir)/./src/headers/spatialite" " -I$(top_builddir)/./src/headers" IGNORE_UNCHANGED)
     endforeach()
 
     vcpkg_install_make()

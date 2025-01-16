@@ -1,20 +1,26 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO aws/s2n-tls
-    REF ab9a3be5a8abcbc5bd7bdba662497a717737c838 # v1.3.0
-    SHA512 0150cba56f7940253ffa5af0c27fdc8db08961d4c8a80377d25f588fa8a56249eb02723304969d0fdebe570388545527ee826a3070c21e50e63c4f021d425728
+    REF "v${VERSION}"
+    SHA512 17f49a114a3e3934cea2ebff47198417927d405194f901540380844f9481d11ccff2219b3512bd20a1f3d1945515b637b609aceaaa3b55701574df1d859125ec
     PATCHES
         fix-cmake-target-path.patch
-        use-openssl-crypto.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         tests   BUILD_TESTING
 )
+
+set(EXTRA_ARGS)
+if(VCPKG_TARGET_ARCHITECTURE STREQUAL "wasm32")
+    set(EXTRA_ARGS "-DS2N_NO_PQ=TRUE")
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        ${EXTRA_ARGS}
         ${FEATURE_OPTIONS}
         -DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF
 )
@@ -24,7 +30,7 @@ vcpkg_copy_pdbs()
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/s2n/cmake)
 
 if(BUILD_TESTING)
-    message(STATUS Testing)
+    message(STATUS "Testing")
     vcpkg_cmake_build(TARGET test LOGFILE_BASE test)
 endif()
 
@@ -37,4 +43,4 @@ file(REMOVE_RECURSE
 )
 
 # Handle copyright
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
